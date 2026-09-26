@@ -57,3 +57,25 @@ CREATE TABLE IF NOT EXISTS game_audio_settings (
 INSERT INTO game_audio_settings(game_code) VALUES
 ('taixiu'),('sicbo'),('dragon'),('baucua'),('blackjack'),('xocdia'),('baccarat'),('slot'),('sports'),('lottery')
 ON CONFLICT(game_code) DO NOTHING;
+
+
+-- Thông tin tài khoản ngân hàng dùng cho luồng mô phỏng TEST (không kết nối thanh toán thật).
+CREATE TABLE IF NOT EXISTS user_bank_accounts (
+ id BIGSERIAL PRIMARY KEY,
+ user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+ bank_name VARCHAR(120) NOT NULL,
+ account_number VARCHAR(64) NOT NULL,
+ account_name VARCHAR(120) NOT NULL,
+ is_default BOOLEAN NOT NULL DEFAULT TRUE,
+ created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+ updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+ UNIQUE(user_id, account_number)
+);
+CREATE INDEX IF NOT EXISTS idx_user_bank_accounts_user ON user_bank_accounts(user_id, is_default DESC, updated_at DESC);
+
+INSERT INTO app_settings(setting_key,setting_value) VALUES
+('test_bank_name','NGAN HANG TEST'),
+('test_bank_account','0000000000'),
+('test_bank_holder','HA88LUCKY TEST'),
+('test_bank_note','Chỉ dùng cho mô phỏng TEST - không chuyển tiền thật')
+ON CONFLICT(setting_key) DO NOTHING;
