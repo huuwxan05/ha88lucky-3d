@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="vi"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HA88Lucky 3D</title>
+<style>
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050812;font-family:Arial;color:white}
+#hud{position:fixed;z-index:5;left:14px;right:14px;top:12px;display:flex;justify-content:space-between;pointer-events:none}
+.panel{background:rgba(8,14,28,.78);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:10px 14px;backdrop-filter:blur(10px);box-shadow:0 10px 30px #0008}
+#hint{position:fixed;z-index:5;bottom:14px;left:50%;transform:translateX(-50%);text-align:center}
+button{pointer-events:auto;padding:10px 14px;border:0;border-radius:10px;font-weight:700}
+canvas{display:block}
+</style></head><body>
+<div id="hud"><div class="panel"><b>HA88Lucky 3D</b><br><small id="gameName">Sảnh 3D</small></div>
+<div class="panel">TEST: <b id="balance">1,000,000</b></div></div>
+<div id="hint" class="panel">Kéo để xoay camera • Cuộn để zoom • WASD di chuyển</div>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+
+const params=new URLSearchParams(location.search);
+const game=params.get('game')||'lobby';
+const names={taixiu:'Tài Xỉu',sicbo:'Sic Bo',dragon:'Dragon Tiger',baucua:'Bầu Cua',blackjack:'Blackjack',xocdia:'Xóc Đĩa',baccarat:'Baccarat',slot:'Slot',sports:'Thể thao',lottery:'Xổ số'};
+document.querySelector('#gameName').textContent=names[game]||'Sảnh 3D';
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x050812);
+scene.fog=new THREE.Fog(0x050812,12,45);
+const camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,.1,100);
+camera.position.set(0,5,11);
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+
+const controls=new OrbitControls(camera,renderer.domElement);
+controls.target.set(0,1,0); controls.enableDamping=true; controls.minDistance=5; controls.maxDistance=22;
+
+scene.add(new THREE.HemisphereLight(0x8fc9ff,0x17131c,2.0));
+const key=new THREE.DirectionalLight(0xffffff,3.2);key.position.set(5,10,4);key.castShadow=true;scene.add(key);
+const rim=new THREE.PointLight(0x44ccff,25,20);rim.position.set(-5,4,-4);scene.add(rim);
+const warm=new THREE.PointLight(0xffbb55,18,16);warm.position.set(6,3,3);scene.add(warm);
+
+const floor=new THREE.Mesh(new THREE.CylinderGeometry(8,8,.35,96),new THREE.MeshStandardMaterial({color:0x121a2d,metalness:.65,roughness:.28}));
+floor.position.y=-.25;floor.receiveShadow=true;scene.add(floor);
+const ring=new THREE.Mesh(new THREE.TorusGeometry(6.4,.07,16,128),new THREE.MeshBasicMaterial({color:0x55d8ff}));
+ring.rotation.x=Math.PI/2;ring.position.y=.03;scene.add(ring);
+
+function addBox(x,y,z,sx,sy,sz,color,metal=.3){
+ const m=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),new THREE.MeshStandardMaterial({color,metalness:metal,roughness:.25}));
+ m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;scene.add(m);return m;
+}
+function addSphere(x,y,z,r,color){
+ const m=new THREE.Mesh(new THREE.SphereGeometry(r,32,20),new THREE.MeshStandardMaterial({color,metalness:.35,roughness:.2}));
+ m.position.set(x,y,z);m.castShadow=true;scene.add(m);return m;
+}
+
+// Generic 3D game-lobby centerpiece. Replaceable with licensed GLB assets.
+addBox(0,1,-2,6,.35,3,0x182b46,.75);
+addSphere(0,2.2,-2,.85,0x55d8ff);
+addSphere(-1.9,1.2,-1.4,.42,0xf7c95a);
+addSphere(1.9,1.2,-1.4,.42,0xff5f75);
+for(let i=0;i<16;i++){
+ const a=i*Math.PI*2/16, x=Math.cos(a)*5.6,z=Math.sin(a)*5.6;
+ addBox(x,.25,z,.25,.35,.25,i%2?0x55d8ff:0xf7c95a,.7);
+}
+
+const clock=new THREE.Clock();
+const moving=[];
+scene.traverse(o=>{if(o.isMesh&&o!==floor)moving.push(o)});
+function animate(){
+ requestAnimationFrame(animate);const t=clock.getElapsedTime();
+ moving.forEach((o,i)=>{o.rotation.y+=.0015+(i%3)*.0005;if(i<3)o.position.y+=Math.sin(t*1.5+i)*.0008});
+ ring.rotation.z=t*.08; controls.update();renderer.render(scene,camera);
+}
+animate();
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+</script></body></html>
